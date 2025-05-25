@@ -1,4 +1,3 @@
-# IoT-Based-Plant-Monitoring-System
 # PlantSense - Smart Plant Care Dashboard
 
 ## What is this project?
@@ -66,8 +65,3 @@
 
 ---
 
-## License
-
-This project is for learning and portfolio purposes.
-![image](home_page.jpg)
-![image](dashboard.jpg)
