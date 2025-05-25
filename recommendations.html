@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantSense - Plant Care Guide</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #388E3C;
+            --secondary: #81C784;
+            --light: #E8F5E9;
+            --dark: #1B5E20;
+            --gray: #757575;
+            --white: #ffffff;
+            --danger: #F44336;
+            --warning: #FFC107;
+            --info: #2196F3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 30px;
+        }
+
+        nav ul li a {
+            color: var(--gray);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        nav ul li a.active {
+            color: var(--primary);
+        }
+
+        nav ul li a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary);
+        }
+
+        /* Guide Section */
+        .guide {
+            padding: 120px 0 60px;
+        }
+
+        .guide-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .guide-header h1 {
+            font-size: 36px;
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        .guide-header p {
+            color: var(--gray);
+            font-size: 18px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .guide-card {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .guide-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .guide-card h2 {
+            color: var(--dark);
+            font-size: 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .guide-card h2 i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        .guide-card p {
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .guide-card ul {
+            list-style: none;
+            margin-left: 20px;
+        }
+
+        .guide-card ul li {
+            margin-bottom: 10px;
+            color: var(--gray);
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .guide-card ul li:before {
+            content: '🌱';
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .plant-care-tips {
+            background-color: var(--light);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 50px;
+        }
+
+        .plant-care-tips h2 {
+            color: var(--dark);
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .tip-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .tip-card i {
+            font-size: 36px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .tip-card h3 {
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .tip-card p {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .plant-benefits {
+            margin-bottom: 50px;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .benefit-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .benefit-icon {
+            width: 60px;
+            height: 60px;
+            background-color: var(--light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+        }
+
+        .benefit-icon i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .benefit-content h3 {
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .benefit-content p {
+            color: var(--gray);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 20px 0;
+            margin-top: 60px;
+        }
+
+        .footer-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-links {
+            display: flex;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            margin-left: 20px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        @media (max-width: 992px) {
+            .guide-grid,
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tips-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .tips-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-links {
+                margin-top: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-leaf"></i>PlantSense
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="recommendations.html" class="active">Plant Guide</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Guide Section -->
+    <section class="guide">
+        <div class="container">
+            <div class="guide-header">
+                <h1>Plant Care Guide</h1>
+                <p>Learn essential tips and tricks for maintaining healthy plants and creating a thriving indoor garden</p>
+            </div>
+
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <h2><i class="fas fa-sun"></i>Light Requirements</h2>
+                    <p>Understanding your plant's light needs is crucial for its health and growth:</p>
+                    <ul>
+                        <li>Direct sunlight: 6+ hours of direct sun daily</li>
+                        <li>Bright indirect light: Near windows but not in direct sun</li>
+                        <li>Medium light: 3-4 feet from windows</li>
+                        <li>Low light: Can survive in darker corners</li>
+                    </ul>
+                </div>
+
+                <div class="guide-card">
+                    <h2><i class="fas fa-tint"></i>Watering Guide</h2>
+                    <p>Proper watering is essential for plant health:</p>
+                    <ul>
+                        <li>Check soil moisture before watering</li>
+                        <li>Water thoroughly until it drains from bottom</li>
+                        <li>Allow soil to dry between waterings</li>
+                        <li>Adjust frequency based on season and humidity</li>
+                    </ul>
+                </div>
+
+                <div class="guide-card">
+                    <h2><i class="fas fa-temperature-high"></i>Temperature & Humidity</h2>
+                    <p>Most indoor plants thrive in these conditions:</p>
+                    <ul>
+                        <li>Temperature: 65-75°F (18-24°C)</li>
+                        <li>Humidity: 40-60%</li>
+                        <li>Avoid cold drafts and direct heat</li>
+                        <li>Use humidifiers in dry environments</li>
+                    </ul>
+                </div>
+
+                <div class="guide-card">
+                    <h2><i class="fas fa-seedling"></i>Soil & Fertilization</h2>
+                    <p>Proper soil and nutrients are vital:</p>
+                    <ul>
+                        <li>Use well-draining potting mix</li>
+                        <li>Fertilize during growing season</li>
+                        <li>Repot when roots outgrow container</li>
+                        <li>Refresh soil every 1-2 years</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="plant-care-tips">
+                <h2>Essential Plant Care Tips</h2>
+                <div class="tips-grid">
+                    <div class="tip-card">
+                        <i class="fas fa-search"></i>
+                        <h3>Regular Inspection</h3>
+                        <p>Check plants weekly for pests, diseases, and signs of stress</p>
+                    </div>
+                    <div class="tip-card">
+                        <i class="fas fa-cut"></i>
+                        <h3>Pruning</h3>
+                        <p>Remove dead leaves and trim overgrown branches regularly</p>
+                    </div>
+                    <div class="tip-card">
+                        <i class="fas fa-sync"></i>
+                        <h3>Rotation</h3>
+                        <p>Rotate plants regularly for even growth and light exposure</p>
+                    </div>
+                    <div class="tip-card">
+                        <i class="fas fa-broom"></i>
+                        <h3>Cleaning</h3>
+                        <p>Dust leaves regularly to allow proper photosynthesis</p>
+                    </div>
+                    <div class="tip-card">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h3>Seasonal Care</h3>
+                        <p>Adjust care routines based on seasonal changes</p>
+                    </div>
+                    <div class="tip-card">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Problem Signs</h3>
+                        <p>Learn to recognize early signs of plant distress</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="plant-benefits">
+                <h2>Benefits of Indoor Plants</h2>
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">
+                            <i class="fas fa-wind"></i>
+                        </div>
+                        <div class="benefit-content">
+                            <h3>Air Purification</h3>
+                            <p>Plants naturally filter and purify indoor air by removing toxins and producing oxygen</p>
+                        </div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <div class="benefit-content">
+                            <h3>Mental Health</h3>
+                            <p>Plants reduce stress, improve mood, and enhance overall well-being</p>
+                        </div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <div class="benefit-content">
+                            <h3>Home Enhancement</h3>
+                            <p>Plants add natural beauty and create a more inviting living space</p>
+                        </div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="benefit-content">
+                            <h3>Health Benefits</h3>
+                            <p>Plants can help reduce blood pressure and improve sleep quality</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-container">
+            <div class="copyright">
+                &copy; 2025 PlantSense. All Rights Reserved.
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="recommendations.html">Plant Guide</a>
+                <a href="#">Help</a>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html> 

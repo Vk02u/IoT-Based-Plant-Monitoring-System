@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantSense - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gauge.js/1.3.7/gauge.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- Add audio element for alarm -->
+    <audio id="alarmSound" preload="auto">
+        <source src="raid.mp3" type="audio/mpeg">
+    </audio>
+    <script>
+        (function() {
+            emailjs.init("nAsQ1r8_82FAHK9qf");
+        })();
+    </script>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #388E3C;
+            --secondary: #81C784;
+            --light: #E8F5E9;
+            --dark: #1B5E20;
+            --gray: #757575;
+            --white: #ffffff;
+            --danger: #F44336;
+            --warning: #FFC107;
+            --info: #2196F3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .plant-selection-card {
+            grid-column: span 8;
+        }
+
+        .plant-search-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .plant-search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .plant-search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .plant-search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        .plant-dropdown {
+            position: relative;
+            margin-top: 15px;
+        }
+
+        .selected-plant {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .selected-plant:hover {
+            border-color: var(--primary);
+        }
+
+        .selected-plant.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .plant-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 250px;
+            overflow-y: auto;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            display: none;
+        }
+
+        .plant-options.show {
+            display: block;
+        }
+
+        .plant-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .plant-option:hover {
+            background-color: var(--light);
+        }
+
+        .no-results {
+            padding: 15px;
+            text-align: center;
+            color: var(--gray);
+        }
+
+        /* Notification Card */
+        .notification-card {
+            grid-column: span 4;
+        }
+
+        .phone-input-container {
+            margin-top: 15px;
+        }
+
+        .phone-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .phone-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .notification-options {
+            margin-top: 15px;
+        }
+
+        .notification-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .notification-checkbox {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .notification-status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: var(--light);
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .notification-status i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+
+
+        .threshold-card {
+            grid-column: span 4;
+        }
+
+        .threshold-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .range-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+        }
+
+        .range-input {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .range-input label {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .threshold-input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .threshold-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .threshold-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s;
+        }
+
+        .threshold-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .threshold-btn:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+        }
+
+        /* Add this to style the current threshold display */
+        .current-threshold {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .current-threshold-value {
+            margin-left: 8px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 30px;
+        }
+
+        nav ul li a {
+            color: var(--gray);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        nav ul li a.active {
+            color: var(--primary);
+        }
+
+        nav ul li a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary);
+        }
+
+        /* Dashboard */
+        .dashboard {
+            padding: 120px 0 60px;
+        }
+
+        .dashboard-header {
+            margin-bottom: 30px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 32px;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .dashboard-header p {
+            color: var(--gray);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-header h2 {
+            font-size: 18px;
+            color: var(--dark);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--light);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        /* Status Card */
+        .status-card {
+            grid-column: span 3;
+        }
+
+        @media (max-width: 992px) {
+            .status-card {
+                grid-column: span 6;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .status-card {
+                grid-column: span 12;
+            }
+        }
+
+        .status-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .status-icon.temperature {
+            color: var(--danger);
+            background-color: rgba(244, 67, 54, 0.1);
+        }
+
+        .status-icon.humidity {
+            color: var(--info);
+            background-color: rgba(33, 150, 243, 0.1);
+        }
+
+        .status-icon.moisture {
+            color: var(--primary);
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .status-icon.pump {
+            color: var(--warning);
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+
+        .connection-status i {
+            margin-right: 8px;
+        }
+
+        .connected {
+            color: var(--primary);
+        }
+
+        .disconnected {
+            color: var(--danger);
+        }
+
+        /* Chart Card */
+        .chart-card {
+            grid-column: span 8;
+        }
+
+        @media (max-width: 992px) {
+            .chart-card {
+                grid-column: span 12;
+            }
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        /* Gauge Card */
+        .gauge-card {
+            grid-column: span 4;
+            text-align: center;
+        }
+
+        @media (max-width: 992px) {
+            .gauge-card {
+                grid-column: span 12;
+            }
+        }
+
+        .gauge-container {
+            width: 200px;
+            height: 200px;
+            display: flex;
+            margin: 0 -35px;
+        }
+
+        /* Control Card */
+        .control-card {
+            grid-column: span 12;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .control-header h2 {
+            font-size: 18px;
+            color: var(--dark);
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .toggle-label {
+            margin-right: 10px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--primary);
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px var(--primary);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(30px);
+        }
+
+        .mode-status {
+            margin-left: 10px;
+            font-weight: 500;
+        }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+            margin-left: 15px;
+        }
+
+        .btn-danger:hover {
+            background-color: #D32F2F;
+        }
+
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 20px 0;
+            margin-top: 60px;
+        }
+
+        .footer-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-links {
+            display: flex;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            margin-left: 20px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .footer-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-links {
+                margin-top: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-leaf"></i>PlantSense
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                    <li><a href="recommendations.html">Plant Guide</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Dashboard Section -->
+    <section class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1>Plant Monitoring Dashboard</h1>
+                <p>Real-time data from your connected plant sensors</p>
+                <div class="connection-status">
+                    <i class="fas fa-circle" id="connection-icon"></i>
+                    <span id="connection-status">Connecting...</span>
+                </div>
+            </div>
+            <div class="dashboard-grid">
+                <!-- Temperature Card -->
+                <div class="card status-card">
+                    <div class="card-header">
+                        <h2>Temperature</h2>
+                        <div class="card-icon status-icon temperature">
+                            <i class="fas fa-thermometer-half"></i>
+                        </div>
+                    </div>
+                    <div class="status-value" id="temperature">--°C</div>
+                    <div class="status-label">Current Temperature</div>
+                </div>
+
+                <!-- Humidity Card -->
+                <div class="card status-card">
+                    <div class="card-header">
+                        <h2>Humidity</h2>
+                        <div class="card-icon status-icon humidity">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                    </div>
+                    <div class="status-value" id="humidity">--%</div>
+                    <div class="status-label">Current Humidity</div>
+                </div>
+
+                <!-- Soil Moisture Card -->
+                <div class="card status-card">
+                    <div class="card-header">
+                        <h2>Soil Moisture</h2>
+                        <div class="card-icon status-icon moisture">
+                            <i class="fas fa-water"></i>
+                        </div>
+                    </div>
+                    <div class="status-value" id="soil-moisture">--%</div>
+                    <div class="status-label">Current Soil Moisture</div>
+                </div>
+
+                <!-- Pump Status Card -->
+                <div class="card status-card">
+                    <div class="card-header">
+                        <h2>Pump Status</h2>
+                        <div class="card-icon status-icon pump">
+                            <i class="fas fa-pump-soap"></i>
+                        </div>
+                    </div>
+                    <div class="status-value" id="pump-status">--</div>
+                    <div class="status-label">Water Pump Status</div>
+                </div>
+
+                <!-- Chart Card -->
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h2>Sensor History</h2>
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="soil-moisture-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gauge Card -->
+                <div class="card gauge-card">
+                    <div class="card-header">
+                        <h2>Soil Moisture Level</h2>
+                        <div class="card-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                    </div>
+                    <div class="gauge-container">
+                        <canvas id="gauge"></canvas>
+                    </div>
+                </div>
+
+                <div class="card threshold-card">
+                    <div class="card-header">
+                        <h2>Moisture Threshold</h2>
+                        <div class="card-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                    </div>
+                    <div class="current-threshold">
+                        Current auto-watering threshold:
+                        <span class="current-threshold-value" id="current-threshold">--%</span>
+                    </div>
+                    <div class="threshold-controls">
+                        <input type="range" min="0" max="100" value="30" class="threshold-slider" id="threshold-slider">
+                        <div class="threshold-value" id="threshold-value">30%</div>
+                        <button class="threshold-btn" id="save-threshold">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Temperature Threshold Card -->
+                <div class="card threshold-card">
+                    <div class="card-header">
+                        <h2>Temperature Threshold</h2>
+                        <div class="card-icon">
+                            <i class="fas fa-thermometer-half"></i>
+                        </div>
+                    </div>
+                    <div class="current-threshold">
+                        Current temperature range:
+                        <span class="current-threshold-value" id="current-temp-threshold">--°C to --°C</span>
+                    </div>
+                    <div class="threshold-controls">
+                        <div class="range-controls">
+                            <div class="range-input">
+                                <label>Min:</label>
+                                <input type="number" min="0" max="50" value="18" class="threshold-input" id="temp-min-input">
+                                <span>°C</span>
+                            </div>
+                            <div class="range-input">
+                                <label>Max:</label>
+                                <input type="number" min="0" max="50" value="28" class="threshold-input" id="temp-max-input">
+                                <span>°C</span>
+                            </div>
+                        </div>
+                        <button class="threshold-btn" id="save-temp-threshold">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Humidity Threshold Card -->
+                <div class="card threshold-card">
+                    <div class="card-header">
+                        <h2>Humidity Threshold</h2>
+                        <div class="card-icon">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                    </div>
+                    <div class="current-threshold">
+                        Current humidity range:
+                        <span class="current-threshold-value" id="current-humidity-threshold">--% to --%</span>
+                    </div>
+                    <div class="threshold-controls">
+                        <div class="range-controls">
+                            <div class="range-input">
+                                <label>Min:</label>
+                                <input type="number" min="0" max="100" value="40" class="threshold-input" id="humidity-min-input">
+                                <span>%</span>
+                            </div>
+                            <div class="range-input">
+                                <label>Max:</label>
+                                <input type="number" min="0" max="100" value="60" class="threshold-input" id="humidity-max-input">
+                                <span>%</span>
+                            </div>
+                        </div>
+                        <button class="threshold-btn" id="save-humidity-threshold">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Control Card -->
+                <div class="card control-card">
+                    <div class="control-header">
+                        <h2>Pump Control</h2>
+                        <div class="toggle-container">
+                            <span class="toggle-label">Manual</span>
+                            <label class="toggle">
+                                <input type="checkbox" id="mode-toggle">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="mode-status" id="mode-status">Manual Mode</span>
+                        </div>
+                    </div>
+                    <div class="control-buttons">
+                        <button class="btn btn-primary" id="pump-on">
+                            <i class="fas fa-play"></i>Turn Pump On
+                        </button>
+                        <button class="btn btn-danger" id="pump-off">
+                            <i class="fas fa-stop"></i>Turn Pump Off
+                        </button>
+                        <div class="spinner" id="spinner"></div>
+                    </div>
+                </div>
+
+
+                <!-- Plant Selection Card -->
+                <div class="card plant-selection-card">
+                    <div class="card-header">
+                        <h2>Plant Selection</h2>
+                        <div class="card-icon">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                    </div>
+                    <div class="plant-search-container">
+                        <input type="text" class="plant-search-input" id="plant-search"
+                            placeholder="Search for plants...">
+                        <i class="fas fa-search plant-search-icon"></i>
+                    </div>
+                    <div class="plant-dropdown">
+                        <div class="selected-plant" id="selected-plant">
+                            <span>Select your plant</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="plant-options" id="plant-options">
+                            <!-- Plant options will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Card -->
+                <div class="card notification-card">
+                    <div class="card-header">
+                        <h2>Notifications</h2>
+                        <div class="card-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                    </div>
+                    <div class="phone-input-container">
+                        <input type="tel" class="phone-input" id="phone-input"
+                            placeholder="Your email address">
+                    </div>
+                    <div class="notification-options">
+                        <div class="notification-option">
+                            <input type="checkbox" class="notification-checkbox" id="critical-alerts" checked>
+                            <label for="critical-alerts">Critical water level alerts</label>
+                        </div>
+                        <div class="notification-option">
+                            <input type="checkbox" class="notification-checkbox" id="pump-status-alerts" checked>
+                            <label for="pump-status-alerts">Pump status notifications</label>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="save-notification-settings"
+                        style="width: 100%; margin-top: 15px;">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                    <div class="notification-status">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="notification-status-text">Notifications not configured</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-container">
+            <div class="copyright">
+                &copy; 2025 PlantSense. All Rights Reserved.
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="recommendations.html">Plant Guide</a>
+                <a href="#">Help</a>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+
+
+
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import {
+            getDatabase,
+            ref,
+            onValue,
+            set,
+        } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+
+
+        // ————— Firebase config —————
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNTybitwZs_UhSzSEHWVPrsVeYp7FenFg",
+            authDomain: "sensorses-18585.firebaseapp.com",
+            databaseURL: "https://sensorses-18585-default-rtdb.firebaseio.com",
+            projectId: "sensorses-18585",
+            storageBucket: "sensorses-18585.appspot.com",
+            messagingSenderId: "1053848466471",
+            appId: "1:1053848466471:web:ab640c50ba48ec808a0a02",
+            measurementId: "G-YHYDPVZTB4",
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        console.log(db)
+
+        // ————— Elements & State —————
+        const connectionStatusEl = document.getElementById("connection-status");
+        const connectionIconEl = document.getElementById("connection-icon");
+        const temperatureEl = document.getElementById("temperature");
+        const humidityEl = document.getElementById("humidity");
+        const soilMoistureEl = document.getElementById("soil-moisture");
+        const pumpStatusEl = document.getElementById("pump-status");
+        const pumpOnBtn = document.getElementById("pump-on");
+        const pumpOffBtn = document.getElementById("pump-off");
+        const spinner = document.getElementById("spinner");
+        const modeToggle = document.getElementById("mode-toggle");
+        const modeStatus = document.getElementById("mode-status");
+
+        let isConnected = false;
+        let disconnectTimer;
+
+
+
+        const thresholdSlider = document.getElementById("threshold-slider");
+        const thresholdValue = document.getElementById("threshold-value");
+        const currentThreshold = document.getElementById("current-threshold");
+        const saveThresholdBtn = document.getElementById("save-threshold");
+
+        // Add this Firebase reference
+        const thresholdRef = ref(db, "/soil_moisture_threshold");
+
+        // Add threshold listener
+        onValue(thresholdRef, (snapshot) => {
+            const v = snapshot.val();
+            if (v !== null && !isNaN(v)) {
+                currentThreshold.textContent = `${v}%`;
+                thresholdSlider.value = v;
+                thresholdValue.textContent = `${v}%`;
+                markConnected();
+            } else {
+                console.error("Invalid threshold value:", v);
+            }
+        });
+
+        // Add threshold slider event listener
+        thresholdSlider.addEventListener("input", () => {
+            const value = thresholdSlider.value;
+            thresholdValue.textContent = `${value}%`;
+        });
+
+        // Add save button event listener
+        saveThresholdBtn.addEventListener("click", () => {
+            const value = parseInt(thresholdSlider.value);
+            saveThresholdBtn.disabled = true;
+
+            set(thresholdRef, value)
+                .then(() => {
+                    // Add visual feedback
+                    saveThresholdBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
+                    setTimeout(() => {
+                        saveThresholdBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+                        saveThresholdBtn.disabled = false;
+                    }, 2000);
+                })
+                .catch((err) => {
+                    console.error("Error saving threshold:", err);
+                    saveThresholdBtn.disabled = false;
+                });
+        });
+
+
+        function resetDisconnectTimer() {
+            clearTimeout(disconnectTimer);
+            disconnectTimer = setTimeout(() => {
+                connectionStatusEl.textContent = "Disconnected";
+                connectionIconEl.style.color = "red";
+                isConnected = false;
+            }, 30000);
+        }
+
+        function markConnected() {
+            if (!isConnected) {
+                connectionStatusEl.textContent = "Connected";
+                connectionIconEl.style.color = "green";
+                connectionIconEl.className = "fas fa-circle connected";
+                isConnected = true;
+            }
+            resetDisconnectTimer();
+        }
+
+        // ————— Firebase refs & listeners —————
+        const humidityRef = ref(db, "/humidity");
+        const temperatureRef = ref(db, "/temperature");
+        const soilMoistureRef = ref(db, "/soil_moisture");
+        const pumpStatusRef = ref(db, "/pump_status");
+        const modeStatusRef = ref(db, "/mode_status");
+
+        onValue(humidityRef, (snapshot) => {
+            const v = snapshot.val();
+            if (v !== null && !isNaN(v)) {
+                humidityEl.textContent = `${v} %`;
+                markConnected();
+                updateChart("humidity", v);
+            } else {
+                console.error("Invalid humidity:", v);
+            }
+        });
+
+        onValue(temperatureRef, (snapshot) => {
+            const v = snapshot.val();
+            if (v !== null && !isNaN(v)) {
+                temperatureEl.textContent = `${v} °C`;
+                markConnected();
+                updateChart("temperature", v);
+            } else {
+                console.error("Invalid temperature:", v);
+            }
+        });
+
+        onValue(soilMoistureRef, (snapshot) => {
+            const v = snapshot.val();
+            if (v !== null && !isNaN(v)) {
+                soilMoistureEl.textContent = `${v} %`;
+                updateGauge(v);
+                updateChart("soil-moisture", v);
+                markConnected();
+
+                // Check for critical soil moisture and send notification
+                const email = emailInput.value.trim();
+                const thresholdValue = parseInt(document.getElementById("current-threshold").textContent);
+                const mode = modeStatus.textContent;
+                const selectedPlantName = selectedPlant.querySelector("span").textContent;
+
+                if (v < thresholdValue) {
+                    const message = mode === "Auto Mode"
+                        ? `Water level is critical (${v}%) for your ${selectedPlantName}. The pump has been activated automatically.`
+                        : `Water level is critical (${v}%) for your ${selectedPlantName}. The pump is in Manual Mode, please activate it.`;
+                    
+                    handleAlarm(message);
+                    
+                    if (email && criticalAlerts.checked) {
+                        const subject = `PlantSense Alert: Critical Water Level for ${selectedPlantName}`;
+                        // Send email using EmailJS (a free email service)
+                        emailjs.send("service_g55v81d", "template_i43477g", {
+                            to_email:email,
+                            subject: subject,
+                            message: message,
+                            plant_name: selectedPlantName,
+                            moisture_level: v,
+                            threshold: thresholdValue,
+                            mode: mode,
+                            timestamp: new Date().toLocaleString()
+                        })
+                        .then(function(response) {
+                            console.log("Email sent successfully:", response);
+                            // Update notification status
+                            notificationStatusText.textContent = "Email notification sent successfully";
+                            // Record successful notification in Firebase
+                            const notification = {
+                                type: "critical_moisture",
+                                level: v,
+                                threshold: thresholdValue,
+                                mode: mode,
+                                timestamp: new Date().toISOString(),
+                                message: message,
+                                email_status: "sent"
+                            };
+                            const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                            set(newNotificationRef, notification);
+                        })
+                        .catch(function(error) {
+                            console.error("Error sending email:", error);
+                            // Update notification status
+                            notificationStatusText.textContent = "Failed to send email notification";
+                            // Record failed notification in Firebase
+                            const notification = {
+                                type: "critical_moisture",
+                                level: v,
+                                threshold: thresholdValue,
+                                mode: mode,
+                                timestamp: new Date().toISOString(),
+                                message: message,
+                                email_status: "failed",
+                                error: error.message
+                            };
+                            const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                            set(newNotificationRef, notification);
+                        });
+                    }
+                }
+            } else {
+                console.error("Invalid soil moisture:", v);
+            }
+        });
+
+        onValue(pumpStatusRef, (snapshot) => {
+            const v = snapshot.val();
+            if (v === "ON" || v === "OFF") {
+                pumpStatusEl.textContent = `${v}`;
+                markConnected();
+            } else {
+                console.error("Invalid pump status:", v);
+            }
+        });
+
+        onValue(modeStatusRef, (snapshot) => {
+            const mode = snapshot.val();
+            if (mode) {
+                modeStatus.textContent = mode;
+                modeToggle.checked = mode === "Auto Mode";
+                updateControlVisibility();
+                markConnected();
+            }
+        });
+
+        // ————— Pump Control —————
+        pumpOnBtn.addEventListener("click", () => togglePump("ON"));
+        pumpOffBtn.addEventListener("click", () => togglePump("OFF"));
+
+        function togglePump(state) {
+            spinner.style.display = "inline-block";
+            pumpOnBtn.disabled = pumpOffBtn.disabled = true;
+            set(pumpStatusRef, state)
+                .catch((err) => console.error("Pump toggle error:", err))
+                .finally(() => {
+                    spinner.style.display = "none";
+                    pumpOnBtn.disabled = pumpOffBtn.disabled = false;
+                });
+        }
+
+        function updateControlVisibility() {
+            if (modeToggle.checked) { // Auto mode
+                pumpOnBtn.style.display = "none";
+                pumpOffBtn.style.display = "none";
+            } else { // Manual mode
+                pumpOnBtn.style.display = "inline-flex";
+                pumpOffBtn.style.display = "inline-flex";
+            }
+        }
+
+        // Mode toggle event listener
+        modeToggle.addEventListener("change", () => {
+            const mode = modeToggle.checked ? "Auto Mode" : "Manual Mode";
+            modeStatus.textContent = mode;
+            updateControlVisibility();
+
+            set(modeStatusRef, mode).catch(err =>
+                console.error("Error updating mode:", err)
+            );
+        });
+
+        // ————— Chart.js —————
+        const ctx = document.getElementById("soil-moisture-chart").getContext("2d");
+
+        const soilChart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: "Soil Moisture %",
+                        data: [],
+                        borderColor: "green",
+                        fill: false,
+                        tension: 0.1,
+                    },
+                    {
+                        label: "Humidity %",
+                        data: [],
+                        borderColor: "blue",
+                        fill: false,
+                        tension: 0.1,
+                    },
+                    {
+                        label: "Temperature °C",
+                        data: [],
+                        borderColor: "red",
+                        fill: false,
+                        tension: 0.1,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { min: 0, max: 100 },
+                },
+                animation: {
+                    duration: 500
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            },
+        });
+
+        function updateChart(type, val) {
+            const t = new Date().toLocaleTimeString();
+
+            // 1) If we already have 20 points, drop the oldest
+            if (soilChart.data.labels.length >= 20) {
+                soilChart.data.labels.shift();
+                soilChart.data.datasets.forEach((ds) => ds.data.shift());
+            }
+
+            // 2) Add the new timestamp
+            soilChart.data.labels.push(t);
+
+            // 3) For each of the three datasets, push either the new value or repeat the last one
+            soilChart.data.datasets.forEach((ds, idx) => {
+                let shouldPush;
+                if (type === "soil-moisture" && idx === 0) shouldPush = val;
+                else if (type === "humidity" && idx === 1) shouldPush = val;
+                else if (type === "temperature" && idx === 2) shouldPush = val;
+                else {
+                    // fill gaps with the previous value (or null if there was none)
+                    shouldPush = ds.data.length > 0 ? ds.data[ds.data.length - 1] : null;
+                }
+                ds.data.push(shouldPush);
+            });
+
+            // 4) Re-render
+            soilChart.update();
+        }
+
+        // ————— Gauge.js —————
+        let gauge;
+
+        function initializeGauge() {
+            const gaugeOpts = {
+                angle: 0,
+                lineWidth: 0.44,
+                radiusScale: 1,
+                pointer: {
+                    length: 0.6,
+                    strokeWidth: 0.035,
+                    color: "#000"
+                },
+                limitMax: false,
+                limitMin: false,
+                colorStart: '#6FADCF',
+                colorStop: '#8FC0DA',
+                strokeColor: '#E0E0E0',
+                generateGradient: true,
+                highDpiSupport: true,
+                staticLabels: {
+                    font: "12px sans-serif",
+                    labels: [0, 25, 50, 75, 100],
+                    color: "#000",
+                    fractionDigits: 0
+                },
+                renderTicks: {
+                    divisions: 5,
+                    divWidth: 1.1,
+                    divLength: 0.7,
+                    divColor: '#333',
+                    subDivisions: 3,
+                    subLength: 0.5,
+                    subWidth: 0.6,
+                    subColor: '#666'
+                }
+            };
+
+            const gaugeTarget = document.getElementById("gauge");
+            gauge = new Gauge(gaugeTarget).setOptions(gaugeOpts);
+            gauge.maxValue = 100;
+            gauge.setMinValue(0);
+            gauge.animationSpeed = 32;
+            gauge.set(0); // Set initial value
+        }
+
+        function updateGauge(val) {
+            if (gauge) {
+                gauge.set(val);
+            } else {
+                console.error("Gauge is not initialized yet.");
+            }
+        }
+
+        // Initialize the gauge when the window loads
+        window.addEventListener("load", initializeGauge);
+
+        // Initial control visibility setup
+        updateControlVisibility();
+
+
+
+
+
+        const plantList = [
+            "Tulsi (Holy Basil)", "Money Plant", "Aloe Vera", "Snake Plant", "Peace Lily",
+            "Areca Palm", "Lucky Bamboo", "Spider Plant", "Jade Plant", "Rubber Plant",
+            "Croton", "Bonsai", "Hibiscus", "Rose", "Jasmine",
+            "Marigold", "Chrysanthemum", "Bougainvillea", "Mogra", "Neem",
+            "Curry Leaf Plant", "Lemongrass", "Mint", "Coriander", "Fenugreek",
+            "Tomato Plant", "Chili Plant", "Brinjal Plant", "Okra Plant", "Spinach",
+            "Amaranthus", "Ficus", "Banyan", "Peepal", "Ashoka",
+            "Gulmohar", "Champa", "Mango Tree", "Banana Plant", "Coconut Palm",
+            "Pomegranate", "Lemon Tree", "Papaya", "Moringa", "Monstera",
+            "Philodendron", "Syngonium", "Pothos", "Aglaonema", "Anthurium"
+        ];
+
+        // Add this after the plantList array
+        const plantThresholds = {
+            "Tulsi (Holy Basil)": { moisture: 40, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Money Plant": { moisture: 30, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 70 } },
+            "Aloe Vera": { moisture: 17, temperature: { min: 18, max: 27 }, humidity: { min: 30, max: 50 } },
+            "Snake Plant": { moisture: 30, temperature: { min: 16, max: 27 }, humidity: { min: 40, max: 60 } },
+            "Peace Lily": { moisture: 45, temperature: { min: 20, max: 28 }, humidity: { min: 50, max: 70 } },
+            "Areca Palm": { moisture: 40, temperature: { min: 20, max: 30 }, humidity: { min: 50, max: 70 } },
+            "Lucky Bamboo": { moisture: 50, temperature: { min: 18, max: 28 }, humidity: { min: 50, max: 70 } },
+            "Spider Plant": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Jade Plant": { moisture: 30, temperature: { min: 18, max: 27 }, humidity: { min: 30, max: 50 } },
+            "Rubber Plant": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Croton": { moisture: 40, temperature: { min: 20, max: 30 }, humidity: { min: 50, max: 70 } },
+            "Bonsai": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Hibiscus": { moisture: 45, temperature: { min: 20, max: 30 }, humidity: { min: 50, max: 70 } },
+            "Rose": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Jasmine": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Marigold": { moisture: 40, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Chrysanthemum": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Bougainvillea": { moisture: 30, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Mogra": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Neem": { moisture: 30, temperature: { min: 20, max: 35 }, humidity: { min: 30, max: 50 } },
+            "Curry Leaf Plant": { moisture: 35, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Lemongrass": { moisture: 40, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Mint": { moisture: 45, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Coriander": { moisture: 40, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Fenugreek": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Tomato Plant": { moisture: 40, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Chili Plant": { moisture: 35, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Brinjal Plant": { moisture: 40, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Okra Plant": { moisture: 35, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Spinach": { moisture: 45, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Amaranthus": { moisture: 40, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Ficus": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Banyan": { moisture: 30, temperature: { min: 20, max: 35 }, humidity: { min: 40, max: 60 } },
+            "Peepal": { moisture: 30, temperature: { min: 20, max: 35 }, humidity: { min: 40, max: 60 } },
+            "Ashoka": { moisture: 35, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Gulmohar": { moisture: 30, temperature: { min: 20, max: 35 }, humidity: { min: 40, max: 60 } },
+            "Champa": { moisture: 35, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Mango Tree": { moisture: 30, temperature: { min: 20, max: 35 }, humidity: { min: 40, max: 60 } },
+            "Banana Plant": { moisture: 45, temperature: { min: 20, max: 35 }, humidity: { min: 50, max: 70 } },
+            "Coconut Palm": { moisture: 35, temperature: { min: 20, max: 35 }, humidity: { min: 50, max: 70 } },
+            "Pomegranate": { moisture: 30, temperature: { min: 20, max: 35 }, humidity: { min: 40, max: 60 } },
+            "Lemon Tree": { moisture: 35, temperature: { min: 20, max: 30 }, humidity: { min: 40, max: 60 } },
+            "Papaya": { moisture: 40, temperature: { min: 20, max: 35 }, humidity: { min: 40, max: 60 } },
+            "Moringa": { moisture: 30, temperature: { min: 20, max: 35 }, humidity: { min: 30, max: 50 } },
+            "Monstera": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Philodendron": { moisture: 40, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Syngonium": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Pothos": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Aglaonema": { moisture: 35, temperature: { min: 18, max: 28 }, humidity: { min: 40, max: 60 } },
+            "Anthurium": { moisture: 40, temperature: { min: 18, max: 28 }, humidity: { min: 50, max: 70 } }
+        };
+
+        // References for plant selection elements
+        const plantSearchInput = document.getElementById("plant-search");
+        const selectedPlant = document.getElementById("selected-plant");
+        const plantOptions = document.getElementById("plant-options");
+
+        // References for notification elements
+        const emailInput = document.getElementById("phone-input"); // We'll reuse the phone input field for email
+        emailInput.placeholder = "Your email address"; // Update placeholder text
+        const criticalAlerts = document.getElementById("critical-alerts");
+        const pumpStatusAlerts = document.getElementById("pump-status-alerts");
+        const saveNotificationSettings = document.getElementById("save-notification-settings");
+        const notificationStatusText = document.getElementById("notification-status-text");
+
+        // Firebase references for new features
+        const plantRef = ref(db, "/selected_plant");
+        const phoneNumberRef = ref(db, "/phone_number"); // We're reusing the phoneNumberRef for email
+        const notificationSettingsRef = ref(db, "/notification_settings");
+        const notificationHistoryRef = ref(db, "/notification_history");
+
+        // Add Firebase references for new thresholds
+        const tempThresholdRef = ref(db, "/temperature_threshold");
+        const humidityThresholdRef = ref(db, "/humidity_threshold");
+
+        // Add references to new elements
+        const tempMinInput = document.getElementById("temp-min-input");
+        const tempMaxInput = document.getElementById("temp-max-input");
+        const humidityMinInput = document.getElementById("humidity-min-input");
+        const humidityMaxInput = document.getElementById("humidity-max-input");
+        const currentTempThreshold = document.getElementById("current-temp-threshold");
+        const currentHumidityThreshold = document.getElementById("current-humidity-threshold");
+        const saveTempThresholdBtn = document.getElementById("save-temp-threshold");
+        const saveHumidityThresholdBtn = document.getElementById("save-humidity-threshold");
+
+        // Populate plant dropdown with all plants
+        function populatePlantOptions(searchTerm = "") {
+            // Clear existing options
+            plantOptions.innerHTML = "";
+
+            // Filter plants based on search term
+            const filteredPlants = plantList.filter(plant =>
+                plant.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            if (filteredPlants.length === 0) {
+                const noResults = document.createElement("div");
+                noResults.className = "no-results";
+                noResults.textContent = "No plants found";
+                plantOptions.appendChild(noResults);
+            } else {
+                filteredPlants.forEach(plant => {
+                    const option = document.createElement("div");
+                    option.className = "plant-option";
+                    option.textContent = plant;
+                    option.addEventListener("click", () => {
+                        selectedPlant.querySelector("span").textContent = plant;
+                        plantOptions.classList.remove("show");
+                        updatePlantThresholds(plant);
+                    });
+                    plantOptions.appendChild(option);
+                });
+            }
+        }
+
+        // Plant selection event listeners
+        selectedPlant.addEventListener("click", () => {
+            selectedPlant.classList.toggle("active");
+            plantOptions.classList.toggle("show");
+            populatePlantOptions();
+        });
+
+        plantSearchInput.addEventListener("input", (e) => {
+            populatePlantOptions(e.target.value);
+            if (!plantOptions.classList.contains("show")) {
+                plantOptions.classList.add("show");
+                selectedPlant.classList.add("active");
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!selectedPlant.contains(e.target) && !plantOptions.contains(e.target) && !plantSearchInput.contains(e.target)) {
+                plantOptions.classList.remove("show");
+                selectedPlant.classList.remove("active");
+            }
+        });
+
+        // Save notification settings
+        saveNotificationSettings.addEventListener("click", () => {
+            const email = emailInput.value.trim();
+            if (!email) {
+                alert("Please enter an email address");
+                return;
+            }
+
+            // Simple email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Please enter a valid email address");
+                return;
+            }
+
+            const settings = {
+                criticalAlerts: criticalAlerts.checked,
+                pumpStatusAlerts: pumpStatusAlerts.checked,
+                lastUpdated: new Date().toISOString()
+            };
+
+            saveNotificationSettings.disabled = true;
+            saveNotificationSettings.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            // Save email and settings to Firebase
+            set(phoneNumberRef, email) // We're reusing the phoneNumberRef for email
+                .then(() => set(notificationSettingsRef, settings))
+                .then(() => {
+                    notificationStatusText.textContent = "Email notifications configured successfully";
+                    saveNotificationSettings.innerHTML = '<i class="fas fa-check"></i> Saved';
+                    setTimeout(() => {
+                        saveNotificationSettings.innerHTML = '<i class="fas fa-save"></i> Save Settings';
+                        saveNotificationSettings.disabled = false;
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error("Error saving notification settings:", err);
+                    notificationStatusText.textContent = "Error configuring notifications";
+                    saveNotificationSettings.innerHTML = '<i class="fas fa-save"></i> Save Settings';
+                    saveNotificationSettings.disabled = false;
+                });
+        });
+
+        // Add these to your existing listeners section
+        onValue(plantRef, (snapshot) => {
+            const plant = snapshot.val();
+            if (plant) {
+                selectedPlant.querySelector("span").textContent = plant;
+                markConnected();
+            }
+        });
+
+        onValue(phoneNumberRef, (snapshot) => {
+            const phone = snapshot.val();
+            if (phone) {
+                emailInput.value = phone;
+                markConnected();
+            }
+        });
+
+        onValue(notificationSettingsRef, (snapshot) => {
+            const settings = snapshot.val();
+            if (settings) {
+                criticalAlerts.checked = settings.criticalAlerts;
+                pumpStatusAlerts.checked = settings.pumpStatusAlerts;
+                notificationStatusText.textContent = "Notifications active";
+                markConnected();
+            }
+        });
+
+        // Function to handle manual mode reminders
+        let reminderInterval;
+        function setupManualModeReminders(moistureLevel, threshold) {
+            // Clear any existing interval
+            clearInterval(reminderInterval);
+
+            // Set up new reminder interval (30 minutes)
+            reminderInterval = setInterval(() => {
+                const currentMode = modeStatus.textContent;
+                const pumpState = pumpStatusEl.textContent;
+
+                // Only continue reminding if still in manual mode and pump is o`
+                if (currentMode === "Manual Mode" && pumpState === "OFF") {
+                    const notification = {
+                        type: "manual_reminder",
+                        level: moistureLevel,
+                        threshold: threshold,
+                        timestamp: new Date().toISOString(),
+                        message: `Reminder: Water level still critical (${moistureLevel}%). Please activate the pump.`
+                    };
+
+                    const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                    set(newNotificationRef, notification);
+                    console.log("Sent reminder notification");
+                } else {
+                    // If conditions changed, stop reminders
+                    clearInterval(reminderInterval);
+                }
+            }, 1800000); // 30 minutes in milliseconds
+        }
+
+        // Clean up intervals when page unloads
+        window.addEventListener("beforeunload", () => {
+            clearInterval(reminderInterval);
+        });
+
+        // Stop reminders if mode changes to Auto
+        onValue(modeStatusRef, (snapshot) => {
+            const mode = snapshot.val();
+            if (mode === "Auto Mode") {
+                clearInterval(reminderInterval);
+            }
+        });
+
+        // Update plant selection handler to set all thresholds
+        function updatePlantThresholds(plant) {
+            const threshold = plantThresholds[plant] || { 
+                moisture: 35, 
+                temperature: { min: 18, max: 28 }, 
+                humidity: { min: 40, max: 60 } 
+            };
+
+            // Update moisture threshold
+            thresholdSlider.value = threshold.moisture;
+            thresholdValue.textContent = `${threshold.moisture}%`;
+            currentThreshold.textContent = `${threshold.moisture}%`;
+
+            // Update temperature threshold
+            tempMinInput.value = threshold.temperature.min;
+            tempMaxInput.value = threshold.temperature.max;
+            currentTempThreshold.textContent = `${threshold.temperature.min}°C to ${threshold.temperature.max}°C`;
+
+            // Update humidity threshold
+            humidityMinInput.value = threshold.humidity.min;
+            humidityMaxInput.value = threshold.humidity.max;
+            currentHumidityThreshold.textContent = `${threshold.humidity.min}% to ${threshold.humidity.max}%`;
+
+            // Save all thresholds to Firebase
+            Promise.all([
+                set(thresholdRef, threshold.moisture),
+                set(tempThresholdRef, threshold.temperature),
+                set(humidityThresholdRef, threshold.humidity)
+            ])
+            .then(() => {
+                console.log("All thresholds updated successfully");
+            })
+            .catch(err => {
+                console.error("Error updating thresholds:", err);
+            });
+        }
+
+        // Add this after the existing variables
+        const alarmSound = document.getElementById("alarmSound");
+        let isAlarmPlaying = false;
+
+        // Function to handle alarm
+        function handleAlarm(message) {
+            if (!isAlarmPlaying) {
+                isAlarmPlaying = true;
+                
+                // Ensure the audio is loaded and ready to play
+                alarmSound.loop = true; // Set loop property
+                const playPromise = alarmSound.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        // Audio is playing
+                        console.log("Alarm started playing");
+                    }).catch(error => {
+                        // Auto-play was prevented
+                        console.error("Error playing alarm:", error);
+                        // Try to play again after user interaction
+                        document.addEventListener('click', function playAlarm() {
+                            alarmSound.play();
+                            document.removeEventListener('click', playAlarm);
+                        }, { once: true });
+                    });
+                }
+                
+                // Create and show popup
+                const popup = document.createElement('div');
+                popup.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    text-align: center;
+                    min-width: 300px;
+                `;
+                
+                popup.innerHTML = `
+                    <h3 style="color: #F44336; margin-bottom: 15px;">⚠️ Alert!</h3>
+                    <p style="margin-bottom: 20px;">${message}</p>
+                    <button id="stopAlarm" style="
+                        background: #4CAF50;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-family: 'Poppins', sans-serif;
+                    ">Stop Alarm</button>
+                `;
+                
+                document.body.appendChild(popup);
+                
+                // Add stop alarm button handler
+                document.getElementById('stopAlarm').addEventListener('click', () => {
+                    // Stop the alarm sound
+                    alarmSound.pause();
+                    alarmSound.currentTime = 0;
+                    alarmSound.loop = false; // Disable loop
+                    isAlarmPlaying = false;
+                    popup.remove();
+                });
+            }
+        }
+
+        // Add this function to check thresholds on page load
+        function checkThresholdsOnLoad() {
+            // Get current values
+            const soilMoisture = parseFloat(soilMoistureEl.textContent);
+            const temperature = parseFloat(temperatureEl.textContent);
+            const humidity = parseFloat(humidityEl.textContent);
+            const thresholdValue = parseInt(document.getElementById("current-threshold").textContent);
+            const tempThreshold = {
+                min: parseInt(tempMinInput.value) || 18,
+                max: parseInt(tempMaxInput.value) || 28
+            };
+            const humidityThreshold = {
+                min: parseInt(humidityMinInput.value) || 40,
+                max: parseInt(humidityMaxInput.value) || 60
+            };
+            const selectedPlantName = selectedPlant.querySelector("span").textContent;
+            const mode = modeStatus.textContent;
+
+            // Check each threshold
+            if (!isNaN(soilMoisture) && soilMoisture < thresholdValue) {
+                const message = mode === "Auto Mode"
+                    ? `Water level is critical (${soilMoisture}%) for your ${selectedPlantName}. The pump has been activated automatically.`
+                    : `Water level is critical (${soilMoisture}%) for your ${selectedPlantName}. The pump is in Manual Mode, please activate it.`;
+                handleAlarm(message);
+            }
+
+            if (!isNaN(temperature) && (temperature < tempThreshold.min || temperature > tempThreshold.max)) {
+                const message = `Temperature (${temperature}°C) is outside the optimal range (${tempThreshold.min}°C to ${tempThreshold.max}°C) for your ${selectedPlantName}.`;
+                handleAlarm(message);
+            }
+
+            if (!isNaN(humidity) && (humidity < humidityThreshold.min || humidity > humidityThreshold.max)) {
+                const message = `Humidity (${humidity}%) is outside the optimal range (${humidityThreshold.min}% to ${humidityThreshold.max}%) for your ${selectedPlantName}.`;
+                handleAlarm(message);
+            }
+        }
+
+        // Add event listener for when the page is fully loaded
+        window.addEventListener('load', () => {
+            // Wait a short moment for Firebase data to load
+            setTimeout(checkThresholdsOnLoad, 2000);
+        });
+
+        // Modify the soil moisture check in the onValue listener
+        onValue(soilMoistureRef, (snapshot) => {
+            const v = snapshot.val();
+            if (v !== null && !isNaN(v)) {
+                soilMoistureEl.textContent = `${v} %`;
+                updateGauge(v);
+                updateChart("soil-moisture", v);
+                markConnected();
+
+                // Check for critical soil moisture and send notification
+                const email = emailInput.value.trim();
+                const thresholdValue = parseInt(document.getElementById("current-threshold").textContent);
+                const mode = modeStatus.textContent;
+                const selectedPlantName = selectedPlant.querySelector("span").textContent;
+
+                if (v < thresholdValue) {
+                    const message = mode === "Auto Mode"
+                        ? `Water level is critical (${v}%) for your ${selectedPlantName}. The pump has been activated automatically.`
+                        : `Water level is critical (${v}%) for your ${selectedPlantName}. The pump is in Manual Mode, please activate it.`;
+                    
+                    handleAlarm(message);
+                    
+                    if (email && criticalAlerts.checked) {
+                        const subject = `PlantSense Alert: Critical Water Level for ${selectedPlantName}`;
+                        // Send email using EmailJS (a free email service)
+                        emailjs.send("service_g55v81d", "template_i43477g", {
+                            to_email:email,
+                            subject: subject,
+                            message: message,
+                            plant_name: selectedPlantName,
+                            moisture_level: v,
+                            threshold: thresholdValue,
+                            mode: mode,
+                            timestamp: new Date().toLocaleString()
+                        })
+                        .then(function(response) {
+                            console.log("Email sent successfully:", response);
+                            // Update notification status
+                            notificationStatusText.textContent = "Email notification sent successfully";
+                            // Record successful notification in Firebase
+                            const notification = {
+                                type: "critical_moisture",
+                                level: v,
+                                threshold: thresholdValue,
+                                mode: mode,
+                                timestamp: new Date().toISOString(),
+                                message: message,
+                                email_status: "sent"
+                            };
+                            const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                            set(newNotificationRef, notification);
+                        })
+                        .catch(function(error) {
+                            console.error("Error sending email:", error);
+                            // Update notification status
+                            notificationStatusText.textContent = "Failed to send email notification";
+                            // Record failed notification in Firebase
+                            const notification = {
+                                type: "critical_moisture",
+                                level: v,
+                                threshold: thresholdValue,
+                                mode: mode,
+                                timestamp: new Date().toISOString(),
+                                message: message,
+                                email_status: "failed",
+                                error: error.message
+                            };
+                            const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                            set(newNotificationRef, notification);
+                        });
+                    }
+                }
+            } else {
+                console.error("Invalid soil moisture:", v);
+            }
+        });
+
+        // Modify the temperature check
+        onValue(temperatureRef, (snapshot) => {
+            const v = snapshot.val();
+            if (v !== null && !isNaN(v)) {
+                temperatureEl.textContent = `${v} °C`;
+                markConnected();
+                updateChart("temperature", v);
+
+                const email = emailInput.value.trim();
+                const selectedPlantName = selectedPlant.querySelector("span").textContent;
+                const tempThreshold = tempMinInput.value && tempMaxInput.value ? 
+                    { min: parseInt(tempMinInput.value), max: parseInt(tempMaxInput.value) } : 
+                    { min: 18, max: 28 };
+
+                if (v < tempThreshold.min || v > tempThreshold.max) {
+                    const message = `Temperature (${v}°C) is outside the optimal range (${tempThreshold.min}°C to ${tempThreshold.max}°C) for your ${selectedPlantName}.`;
+                    handleAlarm(message);
+                    
+                    if (email && criticalAlerts.checked) {
+                        const subject = `PlantSense Alert: Temperature Out of Range for ${selectedPlantName}`;
+                        // Send email using EmailJS (a free email service)
+                        emailjs.send("service_g55v81d", "template_i43477g", {
+                            to_email:email,
+                            subject: subject,
+                            message: message,
+                            plant_name: selectedPlantName,
+                            timestamp: new Date().toLocaleString()
+                        })
+                        .then(function(response) {
+                            console.log("Email sent successfully:", response);
+                            // Update notification status
+                            notificationStatusText.textContent = "Email notification sent successfully";
+                            // Record successful notification in Firebase
+                            const notification = {
+                                type: "temperature_alert",
+                                level: v,
+                                threshold: tempThreshold,
+                                plant_name: selectedPlantName,
+                                timestamp: new Date().toISOString()
+                            };
+                            const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                            set(newNotificationRef, notification);
+                        })
+                        .catch(function(error) {
+                            console.error("Error sending email:", error);
+                            // Update notification status
+                            notificationStatusText.textContent = "Failed to send email notification";
+                            // Record failed notification in Firebase
+                            const notification = {
+                                type: "temperature_alert",
+                                level: v,
+                                threshold: tempThreshold,
+                                plant_name: selectedPlantName,
+                                timestamp: new Date().toISOString(),
+                                email_status: "failed",
+                                error: error.message
+                            };
+                            const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                            set(newNotificationRef, notification);
+                        });
+                    }
+                }
+            } else {
+                console.error("Invalid temperature:", v);
+            }
+        });
+
+        // Modify the humidity check
+        onValue(humidityRef, (snapshot) => {
+            const v = snapshot.val();
+            if (v !== null && !isNaN(v)) {
+                humidityEl.textContent = `${v} %`;
+                markConnected();
+                updateChart("humidity", v);
+
+                const email = emailInput.value.trim();
+                const selectedPlantName = selectedPlant.querySelector("span").textContent;
+                const humidityThreshold = humidityMinInput.value && humidityMaxInput.value ? 
+                    { min: parseInt(humidityMinInput.value), max: parseInt(humidityMaxInput.value) } : 
+                    { min: 40, max: 60 };
+
+                if (v < humidityThreshold.min || v > humidityThreshold.max) {
+                    const message = `Humidity (${v}%) is outside the optimal range (${humidityThreshold.min}% to ${humidityThreshold.max}%) for your ${selectedPlantName}.`;
+                    handleAlarm(message);
+                    
+                    if (email && criticalAlerts.checked) {
+                        const subject = `PlantSense Alert: Humidity Out of Range for ${selectedPlantName}`;
+                        // Send email using EmailJS (a free email service)
+                        emailjs.send("service_g55v81d", "template_i43477g", {
+                            to_email:email,
+                            subject: subject,
+                            message: message,
+                            plant_name: selectedPlantName,
+                            timestamp: new Date().toLocaleString()
+                        })
+                        .then(function(response) {
+                            console.log("Email sent successfully:", response);
+                            // Update notification status
+                            notificationStatusText.textContent = "Email notification sent successfully";
+                            // Record successful notification in Firebase
+                            const notification = {
+                                type: "humidity_alert",
+                                level: v,
+                                threshold: humidityThreshold,
+                                plant_name: selectedPlantName,
+                                timestamp: new Date().toISOString()
+                            };
+                            const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                            set(newNotificationRef, notification);
+                        })
+                        .catch(function(error) {
+                            console.error("Error sending email:", error);
+                            // Update notification status
+                            notificationStatusText.textContent = "Failed to send email notification";
+                            // Record failed notification in Firebase
+                            const notification = {
+                                type: "humidity_alert",
+                                level: v,
+                                threshold: humidityThreshold,
+                                plant_name: selectedPlantName,
+                                timestamp: new Date().toISOString(),
+                                email_status: "failed",
+                                error: error.message
+                            };
+                            const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                            set(newNotificationRef, notification);
+                        });
+                    }
+                }
+            } else {
+                console.error("Invalid humidity:", v);
+            }
+        });
+
+        // Save temperature threshold
+        saveTempThresholdBtn.addEventListener("click", () => {
+            const min = parseInt(tempMinInput.value);
+            const max = parseInt(tempMaxInput.value);
+
+            if (isNaN(min) || isNaN(max) || min >= max) {
+                alert("Please enter valid temperature range (min < max)");
+                return;
+            }
+
+            saveTempThresholdBtn.disabled = true;
+            saveTempThresholdBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            set(tempThresholdRef, { min, max })
+                .then(() => {
+                    // Show success notification
+                    const notification = {
+                        type: "temperature_threshold_updated",
+                        min: min,
+                        max: max,
+                        timestamp: new Date().toISOString()
+                    };
+                    const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                    set(newNotificationRef, notification);
+
+                    // Update UI
+                    saveTempThresholdBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
+                    notificationStatusText.textContent = "Temperature threshold updated successfully";
+                    setTimeout(() => {
+                        saveTempThresholdBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+                        saveTempThresholdBtn.disabled = false;
+                        notificationStatusText.textContent = "Notifications active";
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error("Error saving temperature threshold:", err);
+                    saveTempThresholdBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+                    saveTempThresholdBtn.disabled = false;
+                    notificationStatusText.textContent = "Error updating temperature threshold";
+                });
+        });
+
+        // Save humidity threshold
+        saveHumidityThresholdBtn.addEventListener("click", () => {
+            const min = parseInt(humidityMinInput.value);
+            const max = parseInt(humidityMaxInput.value);
+
+            if (isNaN(min) || isNaN(max) || min >= max) {
+                alert("Please enter valid humidity range (min < max)");
+                return;
+            }
+
+            saveHumidityThresholdBtn.disabled = true;
+            saveHumidityThresholdBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            set(humidityThresholdRef, { min, max })
+                .then(() => {
+                    // Show success notification
+                    const notification = {
+                        type: "humidity_threshold_updated",
+                        min: min,
+                        max: max,
+                        timestamp: new Date().toISOString()
+                    };
+                    const newNotificationRef = ref(db, `/notification_history/${Date.now()}`);
+                    set(newNotificationRef, notification);
+
+                    // Update UI
+                    saveHumidityThresholdBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
+                    notificationStatusText.textContent = "Humidity threshold updated successfully";
+                    setTimeout(() => {
+                        saveHumidityThresholdBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+                        saveHumidityThresholdBtn.disabled = false;
+                        notificationStatusText.textContent = "Notifications active";
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error("Error saving humidity threshold:", err);
+                    saveHumidityThresholdBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+                    saveHumidityThresholdBtn.disabled = false;
+                    notificationStatusText.textContent = "Error updating humidity threshold";
+                });
+        });
+
+    </script>
+</body>
+
+</html>

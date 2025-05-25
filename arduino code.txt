@@ -1,0 +1,199 @@
+#include <ESP8266WiFi.h>
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h> 
+#include <Firebase_ESP_Client.h>
+#include "DHT.h"
+
+// DHT sensor settings
+#define DHTPIN D4
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+// Flash button pin (for resetting WiFi)
+const int flashButtonPin = 0; // GPIO0 (D3)
+
+// LED pin for connection status
+const int ledPin = D5; // GPIO14 (D5)
+
+// Firebase credentials
+#define API_KEY "AIzaSyBNTybitwZs_UhSzSEHWVPrsVeYp7FenFg"
+#define DATABASE_URL "https://sensorses-18585-default-rtdb.firebaseio.com/"
+
+// Firebase objects
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
+bool signupOK = false;
+
+// Relay Pin
+#define RELAY_PIN D1
+
+// Replace macro with a variable
+int soilMoistureThreshold = 30; // Default threshold
+
+// Firebase paths
+#define MODE_STATUS_PATH "/mode_status"
+#define PUMP_STATUS_PATH "/pump_status"
+
+// Helper functions for Firebase
+#include "addons/TokenHelper.h"
+#include "addons/RTDBHelper.h"
+
+// Function to get stable soil moisture average
+int getSoilMoisture() {
+  long sum = 0;
+  for (int i = 0; i < 10; i++) {
+    sum += analogRead(A0);
+    delay(5);
+  }
+  return sum / 10;
+}
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+  
+  pinMode(A0, INPUT);
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW);  // Ensure pump is off initially
+
+  pinMode(flashButtonPin, INPUT);
+  pinMode(ledPin, OUTPUT); // LED pin setup
+
+  // Start WiFi Manager
+  WiFiManager wifiManager;
+  if (!wifiManager.autoConnect("PlantPulse")) { // AP name = PlantPulse
+    Serial.println("Failed to connect and hit timeout");
+    ESP.reset();
+    delay(1000);
+  }
+  Serial.println("Connected to Wi-Fi!");
+
+  // Indicate successful WiFi connection with LED
+  digitalWrite(ledPin, HIGH); // LED ON when WiFi is connected
+
+  // Setup Firebase
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+  config.token_status_callback = tokenStatusCallback;
+
+  if (Firebase.signUp(&config, &auth, "", "")) {
+    Serial.println("Firebase sign-up successful");
+    signupOK = true;
+  } else {
+    Serial.printf("Firebase sign-up failed: %s\n", config.signer.signupError.message.c_str());
+  }
+
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+
+  // Initialize mode status (optional)
+  if (Firebase.ready() && signupOK) {
+    Firebase.RTDB.setString(&fbdo, MODE_STATUS_PATH, "Manual Mode");
+  }
+}
+
+void loop() {
+  delay(1000);
+
+  // Reset WiFi if flash button is pressed
+  if (digitalRead(flashButtonPin) == LOW) {
+    Serial.println("Resetting WiFi Settings...");
+    for (int i = 0; i < 10; i++) {
+      digitalWrite(ledPin, HIGH);
+      delay(500);
+      digitalWrite(ledPin, LOW);
+      delay(500);
+    }
+    WiFiManager wifiManager;
+    wifiManager.resetSettings();
+    ESP.reset();
+    delay(1000);
+  }
+
+  // WiFi connection LED indicator
+  if (WiFi.status() != WL_CONNECTED) {
+    digitalWrite(ledPin, LOW);
+    delay(1000);
+    digitalWrite(ledPin, HIGH);
+    delay(1000);
+    Serial.println("WiFi Disconnected");
+  } else {
+    digitalWrite(ledPin, HIGH);
+    Serial.println("WiFi Connected");
+  }
+
+  // Read sensors
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+  int soilMoistureRaw = getSoilMoisture();
+
+  // Map and constrain soil moisture percentage
+  float soilMoisturePercent = map(soilMoistureRaw, 810, 330, 0, 100);
+  soilMoisturePercent = constrain(soilMoisturePercent, 0, 100);
+
+  // Get updated threshold from Firebase
+  if (Firebase.ready() && signupOK) {
+    if (Firebase.RTDB.getInt(&fbdo, "/soil_moisture_threshold")) {
+      soilMoistureThreshold = fbdo.intData();
+      Serial.print("Firebase threshold: ");
+      Serial.println(soilMoistureThreshold);
+    } else {
+      Serial.print("Failed to fetch threshold: ");
+      Serial.println(fbdo.errorReason());
+    }
+  }
+
+  // Get current mode from Firebase
+  String mode = "";
+  if (Firebase.ready() && signupOK) {
+    Firebase.RTDB.getString(&fbdo, MODE_STATUS_PATH);
+    mode = fbdo.stringData();
+  }
+
+  // Auto / Manual logic
+  if (mode == "Auto Mode") {
+    if (soilMoisturePercent < soilMoistureThreshold) {
+      digitalWrite(RELAY_PIN, HIGH);
+      Serial.println("Auto mode: Soil moisture below threshold, pump ON");
+      Firebase.RTDB.setString(&fbdo, PUMP_STATUS_PATH, "ON");
+    } else {
+      digitalWrite(RELAY_PIN, LOW);
+      Serial.println("Auto mode: Soil moisture above threshold, pump OFF");
+      Firebase.RTDB.setString(&fbdo, PUMP_STATUS_PATH, "OFF");
+    }
+  } 
+  else if (mode == "Manual Mode") {
+    String pumpStatus = "";
+    if (Firebase.ready() && signupOK) {
+      Firebase.RTDB.getString(&fbdo, PUMP_STATUS_PATH);
+      pumpStatus = fbdo.stringData();
+    }
+    if (pumpStatus == "ON") {
+      digitalWrite(RELAY_PIN, HIGH);
+      Serial.println("Manual mode: Pump ON");
+    } else {
+      digitalWrite(RELAY_PIN, LOW);
+      Serial.println("Manual mode: Pump OFF");
+    }
+  }
+
+  // Upload sensor data
+  if (Firebase.ready() && signupOK) {
+    Firebase.RTDB.setFloat(&fbdo, "/humidity", humidity);
+    Firebase.RTDB.setFloat(&fbdo, "/temperature", temperature);
+    Firebase.RTDB.setFloat(&fbdo, "/soil_moisture", soilMoisturePercent);
+
+    Serial.print("Humidity: ");
+    Serial.println(humidity);
+    Serial.print("Temperature: ");
+    Serial.println(temperature);
+    Serial.print("Soil Moisture: ");
+    Serial.print(soilMoisturePercent);
+    Serial.println("%");
+  }
+
+  Serial.println("______________________________");
+}
